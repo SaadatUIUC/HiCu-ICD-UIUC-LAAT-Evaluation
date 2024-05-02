@@ -29,40 +29,51 @@ The general architecture and experimental results can be found in our [paper](ht
    }
 ```
 
-**Please CITE** our paper when this code is used to produce published results or incorporated into other software.
+### Setting up the Environment Locally:
+
+For best experience setting up the project, I recommend Anaconda, which can be downloaded from the following link: [Anaconda](https://www.anaconda.com/
+)
 
 ### Requirements
 
-- python>=3.6
-- torch==1.4.0
-- scikit-learn==0.23.1
-- numpy==1.16.3
-- scipy==1.2.1
-- pandas==0.24.2
-- tqdm==4.31.1
-- nltk>=3.4.5
-- psycopg2==2.7.7
-- gensim==3.6.0
-- transformers==2.11.0
+Use the provided `environment.yml` to setup your local environment.
 
-Run `pip install -r requirements.txt` to install the required libraries
-
+Run `conda env create -f environment.yml` to install the required libraries
+Run `conda activate hicu_env`
 Run `python3` and run `import nltk` and `nltk.download('punkt')` for tokenization 
 
 ### Data preparation
 
 #### MIMIC-III-full and MIMIC-III-50 experiments
 `data/mimicdata/mimic3`
- 
+The folder structure should be similar to the following
+
+data
+| 
+└───mimicdata/
+    |
+    |____mimic3/
+          | D_ICD_DIAGNOSES.csv
+          | D_ICD_PROCEDURES.csv
+          | DIAGNOSES_ICD.csv
+          | PROCEDURES_ICD.csv
+          | NOTEEVENTS.csv
+          | dev_50_hadm_ids.csv
+          | dev_full_hadm_ids.csv
+          | test_50_hadm_ids.csv
+          | test_full_hadm_ids
+          | train_50_hadm_ids
+          | train_full_hadm_ids
+
+We need to load the relevant MIMIC-III files (`D_ICD_DIAGNOSES.csv`, `D_ICD_PROCEDURES.csv`, `DIAGNOSES_ICD.csv`, `PROCEDURES_ICD.csv`, and `NOTEEVENTS.csv`) into their respective tables in PostgreSQL after creating the tables.
+
+For example:
+
+`\COPY d_icd_diagnoses FROM '/path/to/D_ICD_DIAGNOSES.csv' DELIMITER ',' CSV HEADER;`
+
 - The id files are from [caml-mimic](https://github.com/jamesmullenbach/caml-mimic)
 - Install the MIMIC-III database with PostgreSQL following this [instruction](https://mimic.physionet.org/tutorials/install-mimic-locally-ubuntu/)
-- Generate the train/valid/test sets using `src/util/mimiciii_data_processing.py`. (Configure the connection to PostgreSQL at Line 139)
-
-#### MIMIC-II-full experiment
-`data/mimicdata/mimic2`
-
-- Place the MIMIC-II file ([MIMIC_RAW_DSUMS](https://archive.physionet.org/works/ICD9CodingofDischargeSummaries/)) to `data/mimicdata/mimic2`
-- Generate the train/valid/test sets using `src/util/mimicii_data_processing.py`.
+- Generate the train/valid/test sets using `src/util/mimiciii_data_processing.py`. (Configure the connection to PostgreSQL at Line 150)
 
 **Note that:** The code will generate 3 files (`train.csv`, `valid.csv`, and `test.csv`) for each experiment.
 
@@ -79,28 +90,35 @@ The problem and associated configurations are defined in `configuration/config.j
 
 There are common hyperparameters for all the models and the model-specific hyperparameters. See `src/args_parser.py` for more detail
 
-Here is an example of using the framework on MIMIC-III dataset (full codes) with hierarchical join learning
+Here is an example of using the framework on MIMIC-III dataset (50) with hierarchical join learning
 
 ```
-python -m src.run \
-    --problem_name mimic-iii_2_full \
-    --max_seq_length 4000 \
-    --n_epoch 50 \
-    --patience 5 \
-    --batch_size 8 \
-    --optimiser adamw \
-    --lr 0.001 \
-    --dropout 0.3 \
-    --level_projection_size 128 \
-    --main_metric micro_f1 \
-    --embedding_mode word2vec \
-    --embedding_file data/embeddings/word2vec_sg0_100.model \
-    --attention_mode label \
-    --d_a 512 \
-    RNN  \
-    --rnn_model LSTM \
-    --n_layers 1 \
-    --bidirectional 1 \
-    --hidden_size 512 
+@echo off
+python -m src.run ^
+    --problem_name mimic-iii_cl_50 ^
+    --checkpoint_dir scratch/gobi2/wren/icd/laat/checkpoints ^
+    --max_seq_length 4000 ^
+    --n_epoch "1,1,1,1,50" ^
+    --patience 6 ^
+    --lr_scheduler_patience 2 ^
+    --batch_size 8 ^
+    --optimiser adamw ^
+    --lr 0.0005 ^
+    --dropout 0.3 ^
+    --main_metric micro_f1 ^
+    --save_results_on_train ^
+    --embedding_mode word2vec ^
+    --embedding_file data/embeddings/word2vec_sg0_100.model ^
+    --joint_mode hicu ^
+    --d_a 256 ^
+    --metric_level -1 ^
+    --loss ASL ^
+    --asl_config "1,0,0.03" ^
+    RNN ^
+    --rnn_mode LSTM ^
+    --n_layers 1 ^
+    --bidirectional 1 ^
+    --hidden_size 256
+pause
 ```
 

@@ -2,10 +2,9 @@
 # set the connection to PostgreSQL at Line 139
 
 import pandas as pd
-# import psycopg2
+import psycopg2
 import numpy as np
-from src.util.preprocessing import RECORD_SEPARATOR
-# from preprocessing import RECORD_SEPARATOR
+from preprocessing import RECORD_SEPARATOR
 import operator
 import os
 
@@ -24,9 +23,11 @@ n_not_found = 0
 label_count_dict = dict()
 n = 50
 
-noteevents = pd.read_csv("../../data/mimicdata/mimic3/NOTEEVENTS.csv")
-procedures_icd = pd.read_csv('../../data/mimicdata/mimic3/PROCEDURES_ICD.csv')
-diagnoses_icd = pd.read_csv('../../data/mimicdata/mimic3/DIAGNOSES_ICD.csv')
+# You could also use absolute path. For example:
+# C:/Users/test/UIUC/HiCu-ICD-UIUC-LAAT-Evaluation
+noteevents = pd.read_csv("../../data/mimicdata/mimic3/NOTEEVENTS.csv", low_memory=False)
+procedures_icd = pd.read_csv('../../data/mimicdata/mimic3/PROCEDURES_ICD.csv', low_memory=False)
+diagnoses_icd = pd.read_csv('../../data/mimicdata/mimic3/DIAGNOSES_ICD.csv', low_memory=False)
 
 # discharge_summaries = ps.sqldf("SELECT subject_id, text FROM noteevents WHERE category='Discharge summary' ORDER BY charttime, chartdate, description desc")
 discharge_summaries = noteevents.query("CATEGORY == 'Discharge summary'")
@@ -60,12 +61,12 @@ def read_admission_ids(train_file, valid_file, test_file, outdir, top_n_labels=N
     test_writer = csv.DictWriter(test_file, fieldnames=output_fields)
     test_writer.writeheader()
 
-    # conn = get_connection()
-    # cur = conn.cursor()
+    conn = get_connection()
+    cur = conn.cursor()
     # cur.execute("SET work_mem TO '1 GB';")
     # cur.execute("SET statement_timeout = 500000;")
     # cur.execute("SET idle_in_transaction_session_timeout = 500000;")
-    cur = None
+    # cur = None
 
     n_not_found = 0
     process_df(df_train, training_writer, cur, top_n_labels)
@@ -142,12 +143,13 @@ def process_df(df, writer, cur, top_n_labels):
                  len(unique_full_labels)))
 
 
-# def get_connection():
-#     global conn
-#     if conn is None:
-#         conn = psycopg2.connect(database="mimic", user="username", password="password", host="localhost")
-#         # conn = psycopg2.connect(database="mimic", user="autocode", password="secret", host="localhost")
-#     return conn
+def get_connection():
+    global conn
+    if conn is None:
+        # Use the credential that you setup your local PostgreSQL with
+        conn = psycopg2.connect(database="mimic", user="postgres", password="your_password", host="localhost")
+        # conn = psycopg2.connect(database="mimic", user="autocode", password="secret", host="localhost")
+    return conn
 
 
 def get_text_labels(admission_id, cur, top_n_labels):
@@ -407,6 +409,4 @@ if __name__ == "__main__":
         test_file="../../data/mimicdata/mimic3/test_50_hadm_ids.csv",
         outdir="../../data/mimicdata/mimic3/50/",
         top_n_labels=top_n_labels)
-
-
 
