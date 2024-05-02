@@ -48,22 +48,22 @@ Run `python3` and run `import nltk` and `nltk.download('punkt')` for tokenizatio
 `data/mimicdata/mimic3`
 The folder structure should be similar to the following
 
+```
 data
-| 
-└───mimicdata/
-    |
-    |____mimic3/
-          | D_ICD_DIAGNOSES.csv
-          | D_ICD_PROCEDURES.csv
-          | DIAGNOSES_ICD.csv
-          | PROCEDURES_ICD.csv
-          | NOTEEVENTS.csv
-          | dev_50_hadm_ids.csv
-          | dev_full_hadm_ids.csv
-          | test_50_hadm_ids.csv
-          | test_full_hadm_ids
-          | train_50_hadm_ids
-          | train_full_hadm_ids
+└── mimicdata/
+    └── mimic3/
+        ├── D_ICD_DIAGNOSES.csv
+        ├── D_ICD_PROCEDURES.csv
+        ├── DIAGNOSES_ICD.csv
+        ├── PROCEDURES_ICD.csv
+        ├── NOTEEVENTS.csv
+        ├── dev_50_hadm_ids.csv
+        ├── dev_full_hadm_ids.csv
+        ├── test_50_hadm_ids.csv
+        ├── test_full_hadm_ids.csv
+        ├── train_50_hadm_ids.csv
+        └── train_full_hadm_ids.csv
+```
 
 We need to load the relevant MIMIC-III files (`D_ICD_DIAGNOSES.csv`, `D_ICD_PROCEDURES.csv`, `DIAGNOSES_ICD.csv`, `PROCEDURES_ICD.csv`, and `NOTEEVENTS.csv`) into their respective tables in PostgreSQL after creating the tables.
 
